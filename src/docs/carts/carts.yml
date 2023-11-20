@@ -1,0 +1,168 @@
+paths:
+  /api/carts/:
+    post:
+      summary: Creo un nuevo carrito (se crean automaticamente al crear un nuevo usuario y se relacionan por population)
+      tags:
+        - Carts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: Id único del usuario
+                  required: true
+                  example: "1243"
+      responses:
+        "200":
+          description: Cart creado con exito.
+        "400":
+          description: Error crear el Cart.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+  /api/carts/search/{cid}:
+    get:
+      summary: Buscar carrito por id.
+      tags:
+        - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: Id del carrito que se desea solicitar.
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Carrito encontrado con exito.
+        "400":
+          description: Error al obtener carrito.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+  /api/carts/{cid}/products/add/{pid}:
+    put:
+      summary: Agregar productos al carrito por id o aumentar la cantidad de un producto ya exitente.
+      tags:
+        - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: Id del carrito que se desea solicitar.
+        schema:
+          type: string
+      - name: pid
+        in: path
+        required: true
+        description: Id del producto que queremos agregar al carrito.
+      responses:
+        "200":
+          description: Producto agregado al carrito con exito.
+        "400":
+          description: Error agregar el producto al carrito.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+  /api/carts/{cid}/products/reduce/{pid}:
+    delete:
+      summary: Reducir la cantidad de productos en el carrito o eliminar en caso de que quede solo una unidad.
+      tags:
+        - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: Id del carrito que se desea solicitar.
+        schema:
+          type: string
+      - name: pid
+        in: path
+        required: true
+        description: Id del producto que queremos reducir cantidad del carrito.
+      responses:
+        "200":
+          description: Cantidad de producto en el carrito reducida con exito o producto eliminado del carrito.
+        "400":
+          description: Error al reducir la cantidad de unidades o al eliminar el producto al carrito.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+  /api/carts/{cid}/products/delete/{pid}:
+    delete:
+      summary: Eliminar un producto y todas sus unidades del carrito.
+      tags:
+        - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: Id del carrito que se desea solicitar.
+        schema:
+          type: string
+      - name: pid
+        in: path
+        required: true
+        description: Id del producto que queremos eliminar del carrito.
+      responses:
+        "200":
+          description: El producto fue eliminado del carrito con exito.
+        "400":
+          description: Error al eliminar el producto del carrito.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+  /api/carts/{cid}:
+    get:
+      summary: Renderizado del carrito
+      tags:
+        - Carts
+      parameters:
+      - name: cid
+        in: path
+        required: true
+        description: Id del carrito que se desea solicitar.
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Carrito renderizado con exito.
+        "400":
+          description: Error al renderizar el carrito.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+
+components:
+  schemas:
+    Cart:
+      type: object
+      properties:
+        _id:
+          type: object_id
+          description: Id autogenerado por MongoDB
+        products:
+          type: array
+          description: Detalle de productos en Cart
+      example:
+          _id: "64efa1a85b99bd1cae0d4612"
+          products: [{
+              product: {
+                _id: "64f017f75d2d6ec97df7f858",
+                title: "Botines",
+                description: "Zapatos deportivos para Futbol",
+                price: 1850,
+                status: true,
+                thumbnail: "http://www.zapatosdeportivos.com",
+                code: "ZD850CP4",
+                stock: 30,
+                available: true,
+                updatedAt: "2023-11-11T02:31:43.783Z",
+              },
+              quantity: 4,
+              _id: "6527508f3e8ea8a6f8d28feb"
+            }]

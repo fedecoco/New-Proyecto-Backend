@@ -1,22 +1,36 @@
 import mongoose from "mongoose";
+import envConfig from "./config.js";
 
 const URI = "mongodb+srv://fedemperez05:0523Fede@cluster.mo3k8jw.mongodb.net/?retryWrites=true&w=majority";
 
-const connectToDB = () => {
-  mongoose.connect(URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  });
+export default class MongoSingleton {
+    static #instance;
 
-  const connection = mongoose.connection;
+    constructor() {
+        this.#connectMongoDB();
+} 
 
-  connection.on("error", (error) => {
-    console.log("Error connecting to the database:", error);
-  });
+    static getInstance() {
+        if (this.#instance) {
+            console.log("La conexión a la base de datos ya exite");
+        }else{
+            this.#instance = new MongoSingleton();
+        }
+        return this.#instance;
+    }
 
-  connection.once("open", () => {
-    console.log("Connected to the database");
-  });
-};
-
-export default connectToDB;
+    #connectMongoDB = async () => {  
+        try {
+            await mongoose.connect(envConfig.mongoUrl, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                // Cambiar el nivel de escritura a 1 (menos seguro pero más rápido)
+                w: 1,
+            })
+            console.log("Conectado con exito a MongoDB usando Moongose.");
+        } catch (error){
+            console.error("No se pudo conectar a la BD usando Moongose: " + error);
+            process.exit();   
+        }
+    }
+}

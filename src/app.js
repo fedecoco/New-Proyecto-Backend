@@ -1,97 +1,103 @@
+
+//import dependencias
 import express from 'express';
+import {__dirname} from './utils.js';
 
-import routerP from './routes/Products.js';
-import routerC from './routes/Cart.mjs';
-import routerV from './routes/views.router.js';
+/* import { Server } from 'socket.io'; */
+import handlebars from 'express-handlebars';
+import cookieParser from 'cookie-parser';
 
-import { __dirname } from "./utils.js"
-import handlebars from "express-handlebars"
+//import router
+import productRoutes from './routes/mongo/product.router.js'
+import cartRoutes from './routes/mongo/cart.router.js';
+import usersViewRouter from './routes/mongo/users.views.router.js';
+import userRouter from './routes/mongo/users.router.js'
+import views from './routes/mongo/views.router.js';
+import ticketRouter from './routes/mongo/ticket.router.js';
+import mockProd from './routes/mock/mock.router.js';
 
-import { Server } from "socket.io"
-import socketProducts from "./listeners/socketProducts.js"
-import socketChat from './listeners/socketChat.js';
+//import managers
+//* import dotenv from 'dotenv'; */
+import configEnv from './config/config.js';
+import './config/db.js'
 
-import connectToDB from "./config/configServer.js"
-
-// Sessions
-import FileStore from 'session-file-store'
+//PARA SESSION
 import session from 'express-session';
-import mongoose from 'mongoose';
 
-//Passport imports
+//import for passport
 import passport from 'passport';
 import initializePassport from './config/passport.config.js';
 
-//import Routers
-import viewsRouter from './routes/views.router.js';
-import usersViewRouter from './routes/users.views.router.js';
-import sessionsRouter from './routes/sessions.router.js'
-import githubLoginViewRouter from './routes/github-login.views.router.js'
+//import Swagger
+import swaggerUI from 'swagger-ui-express';
+import swaggerJsDoc from 'swagger-jsdoc';
 
+//Logger
+import { useLogger } from './config/logger.config.js';
 
+const log = useLogger();
+/* dotenv.config(); */
 const app = express();
-const PORT = 8080;
 
+//config Swagger
+const swaggerOptions = {
+    definition: {
+        openapi: "3.0.1",
+        info: {
+            title: "Ecommerce API, proyecto Backend CoderHouse",
+            description: "Doc para uso de Swagger"
+        }
+    },
+    apis: ["./src/docs/**/*.yml"]
+};
+const specs = swaggerJsDoc(swaggerOptions);
 
+//Cookies
+app.use(cookieParser("CoderS3cr3tC0d3"));
+
+//Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname + "/public"))
 
-app.engine("handlebars", handlebars.engine())
-app.set("view engine", "handlebars")
-app.set("views", __dirname + "/views")
+//Middleware para archivos estaticos
+app.use(express.static(__dirname + '/public'));
 
-//Conectamos nuestra session con el file storage.
+//middeleware para passport
+initializePassport();
+app.use(passport.initialize());
 
-const fileStorage = FileStore(session);
+//Config Handlebars
+app.engine('handlebars', handlebars.engine());
+app.set('views', __dirname + '/views');
+app.set('view engine', 'handlebars');
 
- app.use(session({
-  //ttl: Time to live in seconds,
-  //retries: Reintentos para que el servidor lea el archivo del storage.
-  //path: Ruta a donde se buscará el archivo del session store.
-
-  // Usando --> session-file-store
-    store: new fileStorage({ path: "./sessions", ttl: 15, retries: 0 }),
-
-    //store: MongoStore.create({
-    //mongoUrl: "mongodb+srv://fedemperez05:0523Fede@cluster.mo3k8jw.mongodb.net/?retryWrites=true&w=majority",
-    //mongoOptions: { useNewUrlParser: true, useUnifiedTopology: true },
-    //ttl: 10
-    // }),
-
-
-  secret: "coderS3cr3t",
-  resave: false, //guarda en memoria
-  saveUninitialized: true, //lo guarda a penas se crea
+//SESSION
+app.use(session({
+    mongoUrl: configEnv.mongoUrl,
+    ttl: 60,
+    secret: "coderS3cr3t",
+    resave: true, 
+    saveUninitialized: false, 
+    //lo guarda apenas se crea
 }));
 
-//TODO: Middlewares Passport
-initializePassport();
-app.use(passport.initialize())
-app.use(passport.session())
-
-
-app.use('/api/products', routerP);
-app.use('/api/cart', routerC);
-app.use('/', routerV);
-
+//ROUTERS
+app.use("/api/products", productRoutes)
+app.use("/api/carts", cartRoutes);  
+app.use("/products", views);
+app.use("/carts", views);
 app.use("/users", usersViewRouter);
-app.use("/api/session", sessionsRouter);
-app.use("/github", githubLoginViewRouter);
+app.use("/api/users", userRouter);
+app.use("/api/ticket", ticketRouter);
+app.use("/mockingproducts", mockProd);
+app.use("/loggerTest", loggerTest);
+//endpoint Swagger
+app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
-connectToDB()
 
-const httpServer = app.listen(PORT, () => {
-  try {
-      console.log(`Listening to the port ${PORT}\nAcceder a:`);
-      console.log(`\t1). http://localhost:${PORT}/api/products`)
-      console.log(`\t2). http://localhost:${PORT}/api/carts`);
-  }
-  catch (err) {
-      console.log(err);
-  }
-});
 
-const socketServer = new Server(httpServer)
-socketProducts(socketServer)
-socketChat(socketServer)
+
+const PORT = configEnv.port ;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
+    });

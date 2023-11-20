@@ -1,0 +1,140 @@
+paths:
+  /api/products/:
+    get:
+      summary: Obtengo todos los productos.
+      tags: 
+        - Products
+      responses:
+        "200": 
+          description: Operacion exitosa, se retorna data.
+        "400":
+          description: Operacion fallida.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+  /api/products/createOne:
+    post:
+      summary: Agregar producto a la base de datos.
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        "200":
+          description: Producto creado exitosamente.
+        "400":
+          description: Error al crear el producto.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+  /api/products/findOne/{pid}:
+    get:
+      summary: Buscar producto por id.
+      tags:
+        - Products
+      parameters:
+      - name: pid
+        in: path
+        required: true
+        description: Id del producto que se desea solicitar.
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Producto encontrado con exito.
+        "400":
+          description: Error al obtener producto.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+  /api/products/updateOne/{pid}:
+    put:
+      summary: Modificar o actualizar producto.
+      tags:
+        - Products
+      parameters:
+      - name: pid
+        in: path
+        required: true
+        description: Id del producto que se desea modificar.
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        "200":
+          description: Producto encontrado y modificado con exito.
+        "400":
+          description: Error al obtener producto o modificarlo.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+  /api/products/deleteOne/{pid}:
+    delete:
+      summary: Eliminar producto por id.
+      tags:
+        - Products
+      parameters:
+      - name: pid
+        in: path
+        required: true
+        description: Id del producto que se desea eliminar.
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Producto eliminado con exito.
+        "400":
+          description: Error al obtener producto.
+        "500":
+          description: Error inspesperado del servidor, no se concluyo la operación.
+
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        _id:
+          type: object_id
+          description: Id autogenerado por MongoDB
+        title:
+          type: string
+          description: Nombre del producto
+        description:
+          type: string
+          description: Descripcion del producto
+        price:
+          type: number
+          description: Precio del producto
+        thumbnail:
+          type: string
+          description: Url de la imagen del producto
+        code:
+          type: string
+          description: Codigo alfanumerico del producto
+        stock:
+          type: number
+          description: Cantidad de productos en stock
+        available:
+          type: boolean
+          description: Estado del producto segun stock
+        updatedAt:
+          type: string
+          description: Fecha autogenerada por MongoDB
+      example:
+          title: "Camisa de algodón"
+          description: "Prueba1"
+          price: 450
+          thumbnail: "http://www.camisaalgodon.com"
+          code: "prueba2266771"
+          stock: 20
+          available: true

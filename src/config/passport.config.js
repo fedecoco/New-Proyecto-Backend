@@ -1,12 +1,17 @@
 import passport from 'passport';
 import passportLocal from 'passport-local';
-import userModel from '../dao/models/user.model.js';
+import userModel from '../services/dao/dao/models/user.model.js';
 import GitHubStrategy from 'passport-github2';
 import { createHash, isValidPassword } from '../utils.js';
+import {PRIVATE_KEY } from "../utils.js";
+import jwtStrategy from "passport-jwt";
+
 
 
 // TODO: Implementacion passport
 // declaracion de estrategia
+
+
 const localStrategy = passportLocal.Strategy
 
 const initializePassport = () => {
@@ -32,7 +37,7 @@ passport.use('github', new GitHubStrategy(
                 let newUser = {
                     first_name: profile._json.name,
                     last_name: '',
-                    age: 18,
+                    age: "",
                     email: profile._json.email,
                     password: '',
                     loggedBy: "GitHub"
