@@ -1,6 +1,9 @@
 
 //import dependencias
 import express from 'express';
+//cors
+//import cors from 'cors';
+
 import {__dirname} from './utils.js';
 
 /* import { Server } from 'socket.io'; */
@@ -16,9 +19,11 @@ import views from './routes/mongo/views.router.js';
 import ticketRouter from './routes/mongo/ticket.router.js';
 import mockProd from './routes/mock/mock.router.js';
 
-//import managers
-//* import dotenv from 'dotenv'; */
-import configEnv from './config/config.js';
+import MongoStore from 'connect-mongo';  
+import mongoose from 'mongoose'; 
+//import dotenv
+ import dotenv from 'dotenv'; 
+import config from './config/config.js';
 import './config/db.js'
 
 //PARA SESSION
@@ -32,19 +37,25 @@ import initializePassport from './config/passport.config.js';
 import swaggerUI from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
 
-//Logger
-import { useLogger } from './config/logger.config.js';
 
-const log = useLogger();
-/* dotenv.config(); */
+
+
+//Logger
+
+import { addLogger } from './config/logger.config.js';
+
 const app = express();
+
+// Habilitar CORS
+//app.use(cors());
+
 
 //config Swagger
 const swaggerOptions = {
     definition: {
         openapi: "3.0.1",
         info: {
-            title: "Ecommerce API, proyecto Backend CoderHouse",
+            title: "Proyecto Backend CoderHouse",
             description: "Doc para uso de Swagger"
         }
     },
@@ -52,10 +63,13 @@ const swaggerOptions = {
 };
 const specs = swaggerJsDoc(swaggerOptions);
 
+
 //Cookies
 app.use(cookieParser("CoderS3cr3tC0d3"));
 
+
 //Middlewares
+app.use(addLogger)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -71,15 +85,17 @@ app.engine('handlebars', handlebars.engine());
 app.set('views', __dirname + '/views');
 app.set('view engine', 'handlebars');
 
-//SESSION
 app.use(session({
-    mongoUrl: configEnv.mongoUrl,
-    ttl: 60,
-    secret: "coderS3cr3t",
-    resave: true, 
-    saveUninitialized: false, 
-    //lo guarda apenas se crea
+  mongoUrl: config.mongo_Url,
+  ttl: 60,
+  secret: "coderS3cr3t",
+  resave: true, 
+  saveUninitialized: false, 
+  
 }));
+  
+
+
 
 //ROUTERS
 app.use("/api/products", productRoutes)
@@ -90,14 +106,15 @@ app.use("/users", usersViewRouter);
 app.use("/api/users", userRouter);
 app.use("/api/ticket", ticketRouter);
 app.use("/mockingproducts", mockProd);
-app.use("/loggerTest", loggerTest);
+app.use("/loggerTest", addLogger);
 //endpoint Swagger
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
 
 
-
-const PORT = configEnv.port ;
+const PORT = process.env.PORT  || 8080;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
     });
+
+

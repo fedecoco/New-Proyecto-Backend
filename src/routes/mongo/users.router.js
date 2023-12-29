@@ -1,18 +1,50 @@
 import { Router } from 'express';
-import {registerController, loginController, logoutController, gitHubCallbackController} from "../../controllers/user.controller.js";
+import {registerController, loginController,adminView ,logoutController,logAuthenticate,gitHubCallbackController, getAllUsersController, updateUserController, findOneUserController, deleteUserController, imgProfileController,delAllInactiveUsersController, userDUController, userCDController, userECController, /* imgProdController */} from "../../controllers/user.controller.js";
 import passport from 'passport';
+import { upProdImg, upProfileImg, upUserDocs } from '../../utils.js';
 
 
 
 const router = Router();
 
+
 //Registramos al usuario en la base de datos MongoDB
 router.post("/register", registerController );
 
+//Actualizamos un usuario en la base de datos MongoDB
+router.put('/update/:uid', updateUserController)
+
+//Actualizamos un usuario en la base de datos MongoDB
+router.get('/findOne/:uid', findOneUserController)
+
+//Eliminar un usuario de la base de datos MongoDB
+router.delete('/deleteOne/:uid', deleteUserController)
+
+//Obtenemos todos los usuarios de la base de datos MongoDB
+router.get('/allUsers', getAllUsersController )
+
+//Obtenemos todos los usuarios inactivos de la base de datos MongoDB
+router.delete('/inactiveUsers', delAllInactiveUsersController )
+
+//Logueamos al usuario en la base de datos MongoDB
 router.post('/login', loginController)
 
+//Deslogueamos al usuario de la base de datos MongoDB
 router.get('/logout', logoutController)
 
+//subir img de perfil
+router.post('/uploadAvatar/:user', upProfileImg.single('file'), imgProfileController)
+
+//subir img de producto
+/* router.post('/uploadProdImg/:user', upProdImg.single('file'), imgProdController) */
+
+//subir documentos
+router.post('/uploadDocs/du/:user', upUserDocs.single('du'), userDUController)
+router.post('/uploadDocs/cd/:user', upUserDocs.single('cd'), userCDController)
+router.post('/uploadDocs/ec/:user', upUserDocs.single('ec'), userECController)
+
+
+//Logueo con GitHUb
 router.get('/github', passport.authenticate('github', {scope: ['user:email']}))
 
 router.get('/githubcallback', passport.authenticate('github', {failureRedirect: '/github/error'}),gitHubCallbackController)
@@ -29,22 +61,30 @@ router.get("/fail-login", (req, res) => {
 })
 
 
-
+//Acceso a ruta privada
 router.get('/private/:role', auth, (req, res) =>{
     res.render('admin')
 });
 
+//Acceso a ruta premium
+router.get('/premium/:uid', )
+
 //autenticación
-function auth(req, res, next){
+function auth(req, res, next) {
     const role = req.params.role;
+
+    
     if (role === "admin") {
         return next();
-    } else{
+    } else {
         return res.status(403).send("Usuario no autorizado para ingresar a este recurso.");
     }
-    
 }
-
+// Agregar las rutas en user.router.js
+router.get("/", passport.authenticate('jwt', { session: true }), logAuthenticate);
+router.delete('/', delAllInactiveUsersController); // Agregar la ruta para limpiar usuarios inactivos
+router.get("/admin-view", auth, adminView);
 
 
 export default router;
+

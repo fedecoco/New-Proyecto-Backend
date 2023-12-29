@@ -1,0 +1,32 @@
+[
+    {
+      "id": 1696884973382,
+      "first_name": "adadas",
+      "last_name": "adadsa",
+      "email": "adadasaaaa1111",
+      "age": 1,
+      "password": "$2b$10$F1G9b38.pTPzauAUmtD8mObZSxc5FT7nC6FiuO92DWn5mUTjf5MOm",
+      "logedBy": "WebPage",
+      "role": "user"
+    },
+    {
+      "id": 1696885030367,
+      "first_name": "adadas",
+      "last_name": "adadsa",
+      "email": "adadasaaaa1111aaa",
+      "age": 1,
+      "password": "$2b$10$dYZ3r74M8e9nis0smERrxOO8KZJYQzj/ujgpMwW7rhs4jwbTrKUou",
+      "logedBy": "WebPage",
+      "role": "user"
+    },
+    {
+      "id": 1696885129807,
+      "first_name": "adadas",
+      "last_name": "adadsa",
+      "email": "adadasaaaa1111aaaqqq",
+      "age": 1,
+      "password": "$2b$10$/nNV8qdC3ZePS2OkZbjZnunjtWQNdqAdNRFAB3Gw7Je/6/B3gsVnC",
+      "logedBy": "WebPage",
+      "role": "user"
+    }
+  ]

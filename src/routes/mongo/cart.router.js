@@ -1,34 +1,39 @@
-
+// Importa express y el router
 import express from 'express';
-import { creatNewCart, searchCart, putProductToCart, deleteProductFromCart, cleanCart, downQuantity, renderCart } from '../../controllers/cart.controller.js';
-import { createTicket } from '../../controllers/ticket.controller.js';
-
 const router = express.Router();
 
-//Creamos un carrito
+// Importa tus controladores
+import {
+    creatNewCart,
+    searchCart,
+    putProductToCart,
+    deleteProductFromCart,
+    cleanCart,
+    downQuantity,
+    renderCart
+} from '../../controllers/cart.controller.js';
+
+// Define las rutas
 router.post('/', creatNewCart);
 
-// Buscamos el carrito de compra especifico
-router.get ('/search/:cid', searchCart);
+// Ruta para buscar el carrito de compra específico (API)
+router.get('/search/:cid', searchCart);
 
-//Agregamos un producto especifico al carrito
+// Ruta para agregar un producto específico al carrito (API)
 router.put('/:cid/products/add/:pid', putProductToCart);
 
-//Bajamos la cantidad de un producto especifico al carrito o lo eliminamos en el caso de solo quedar uno
+// Ruta para reducir la cantidad de un producto específico en el carrito o eliminarlo si queda uno (API)
 router.delete('/:cid/products/reduce/:pid', downQuantity);
 
-//Eliminamos el producto del carrito
+// Ruta para eliminar un producto del carrito (API)
 router.delete('/:cid/products/delete/:pid', deleteProductFromCart);
 
-//limipamos el carrito de compras
+
+// Ruta para limpiar el carrito de compras (API)
 router.put('/:cid/clean', cleanCart);
 
-//renderizado de carrito de compras
-router.get('/:cid', renderCart)
+// Ruta para renderizar el carrito de compras (Vista)
+router.get('/carts/:cid', renderCart);
 
-//finalizar compra
-router.post('/:cid/purchase', createTicket);
-
-
-
+// Exporta el router
 export default router;

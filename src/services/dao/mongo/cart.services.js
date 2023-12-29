@@ -86,13 +86,39 @@ export default class CartServices {
     };
 
     cartRender = async (cid, page) => {
-        const cartProducts= await CartModel.paginate({_id : cid},{page, lean: true, populate: {path : 'products.product'}  })
-
-        if (!cartProducts) {
-            return res.status(404).send('Carrito no encontrado');
-        }else {
-            return cartProducts;
+        try {
+            const cartProducts = await CartModel.paginate(
+                { _id: cid },
+                { page, lean: true, populate: { path: 'products.product' } }
+            );
+    
+            if (cartProducts) {
+                return cartProducts;
+            } else {
+                // En lugar de enviar un mensaje de error, puedes devolver un objeto que indique que el carrito no fue encontrado
+                return { error: "Carrito no encontrado" };
+            }
+        } catch (error) {
+            console.error("Error al renderizar el carrito:", error);
+            // En lugar de enviar un mensaje de error, puedes devolver un objeto que indique que hubo un error interno del servidor
+            return { error: "Error interno del servidor", details: error.message };
         }
     };
+    cartDelete = async (cid) => {
+        try {
+            const result = await CartModel.deleteOne({ _id: cid });
+            if (result.deletedCount === 0) {
+                return { error: "Carrito no encontrado" };
+            } else {
+                return { message: "Carrito eliminado exitosamente" };
+            }
+        } catch (error) {
+            console.error("Error al eliminar el carrito:", error);
+            return { error: "Error interno del servidor", details: error.message };
+        }
+    };
+    
+ ;
+     
 
 }

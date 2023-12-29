@@ -1,11 +1,9 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import { __dirname } from '../../../../utils.js';
 import User from './models/userModel.js';
-import { createHash } from '../../../../utils.js';
-import productService from "./product.services.js";
-import { isValidPassword } from '../../../../utils.js';
-import { generateToken } from '../../../../utils.js';
-import envConfig from '../../../config/env.config.js';
+import { createHash, isValidPassword, generateToken } from '../../../../utils.js';
+import ProductService from './product.services.js';
+import envConfig from '../../../config/config.js';
 
 const PORT = envConfig.port;
 
@@ -16,12 +14,11 @@ export default class UserService {
     #fileSystem;
 
     constructor() {
-        this.#users = new Array();
+        this.#users = [];
         this.#userDirPath = __dirname + "/Data";
         this.#userFilePath = this.#userDirPath + "/Users.json";
         this.#fileSystem = fs;
     }
-
 
     isEmailDuplicated(email) {
         return this.#users.some(user => user.email === email);
@@ -31,29 +28,29 @@ export default class UserService {
         return (new Date()).getTime();
     }
 
-    #preparararDirectorioBase = async () => {
-        console.log("ingreso a preparar directorio base");
+    #prepareBaseDirectory = async () => {
+        console.log("Ingreso a preparar directorio base");
         await this.#fileSystem.promises.mkdir(this.#userDirPath, { recursive: true });
-        //verificamos si el archivo existe
-        if (!this.#fileSystem.existsSync(this.#userFilePath)) {
+        // Verificamos si el archivo existe
+        if (!(await this.#fileSystem.promises.stat(this.#userFilePath)).isFile()) {
             await this.#fileSystem.promises.writeFile(this.#userFilePath, '[]');
-        }; 
+        }
         let usersFile = await this.#fileSystem.promises.readFile(this.#userFilePath, 'utf-8');
-            this.#users = JSON.parse(usersFile);
+        this.#users = JSON.parse(usersFile);
     }
 
     save = async (user) => {
         let id = this.generateId();
         let loggedBy = 'WebPage';
         let role = 'user';
-        let newUser = new User(user.first_name, user.last_name, user.email, user.age, user.password = createHash(user.password), loggedBy = loggedBy, role = role, id = id);
+        let newUser = new User(user.first_name, user.last_name, user.email, user.age, createHash(user.password), loggedBy, role, id);
         console.log(newUser);
         try {
-            await this.#preparararDirectorioBase()
+            await this.#prepareBaseDirectory();
             if (this.isEmailDuplicated(newUser.email)) {
-                return { error: 'El codigo del producto ya existe' };
+                return { error: 'El email del usuario ya existe' };
             }
-            let response = { ...newUser};
+            let response = { ...newUser };
             console.log(response);
             this.#users.push(response);
             await this.#fileSystem.promises.writeFile(this.#userFilePath, JSON.stringify(this.#users, null, 2));
@@ -67,11 +64,11 @@ export default class UserService {
 
     login = async (email, password, res) => {
         try {
-            await this.#preparararDirectorioBase();
+            await this.#prepareBaseDirectory();
             let exists = this.#users.find(user => user.email === email);
             if (!exists) {
                 return console.log("Usuario no encontrado");
-                }
+            }
             if (!isValidPassword(exists, password)) {
                 return console.log("Los datos ingresados son incorrectos");
             }
@@ -81,10 +78,10 @@ export default class UserService {
                 role: exists.role,
             };
             const accessToken = generateToken(tokenUser);
-            
+
             res.cookie('jwtCookieToken', accessToken, {
-                maxAge: 60000,  
-                httpOnly: true, // no expone la cookie cuando esta en true
+                maxAge: 60000,
+                httpOnly: true, // no expone la cookie cuando está en true
             })
         }
         catch (error) {
@@ -106,17 +103,18 @@ export default class UserService {
         };
         const accessToken = generateToken(tokenUser)
         res.cookie('jwtCookieToken', accessToken, {
-            maxAge: 60000,  
+            maxAge: 60000,
             httpOnly: true,
         })
-    
+
         res.redirect('/users');
     };
 
-    loginShowProducts = async (req ,res) => {
+    loginShowProducts = async (req, res) => {
         let user = req.user;
         console.log(user);
-        let result = await productService.getAllProducts();
-            return res.render('profile', result)            
+        let productServiceInstance = new ProductService();
+        let result = await productServiceInstance.getAllProducts();
+        return res.render('profile', result)
     };
 }

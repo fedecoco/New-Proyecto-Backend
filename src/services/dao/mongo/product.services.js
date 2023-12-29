@@ -24,7 +24,7 @@ export default class ProductService {
     };
 
     getById = async (id) => {
-        const response = await ProductModel.findOne(id);
+        const response = await ProductModel.findOne({ _id: id });
         if (response) {
             return response;
         } else {

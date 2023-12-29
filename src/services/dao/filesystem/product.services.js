@@ -1,8 +1,6 @@
-import fs from 'fs';
-import { __dirname } from '../../../../utils.js';
+import fs from 'fs/promises';
 import Product from './models/productModel.js';
-
-
+import { __dirname } from '../../../../utils.js';
 
 export default class ProductServices {
     #products;
@@ -11,12 +9,11 @@ export default class ProductServices {
     #fileSystem;
 
     constructor() {
-        this.#products = new Array();
-        this.#productDirPath = __dirname + "/Data";
-        this.#productFilePath = this.#productDirPath + "/Products.json";
+        this.#products = [];
+        this.#productDirPath = __dirname + "/data";
+        this.#productFilePath = this.#productDirPath + "/products.json";
         this.#fileSystem = fs;
     }
-
 
     isCodeDuplicated(code) {
         return this.#products.some(product => product.code === code);
@@ -26,108 +23,112 @@ export default class ProductServices {
         return (new Date()).getTime();
     }
 
-    #preparararDirectorioBase = async () => {
-        await this.#fileSystem.promises.mkdir(this.#productDirPath, { recursive: true });
-            //verificamos si el archivo existe
-            if (!this.#fileSystem.existsSync(this.#productFilePath)) {
-                await this.#fileSystem.promises.writeFile(this.#productFilePath, '[]');
+    #prepareBaseDirectory = async () => {
+        try {
+            await this.#fileSystem.mkdir(this.#productDirPath, { recursive: true });
+
+            // Verificamos si el archivo existe
+            if (!await this.#fileSystem.access(this.#productFilePath).then(() => true).catch(() => false)) {
+                await this.#fileSystem.writeFile(this.#productFilePath, '[]');
             }
-    }
+        } catch (error) {
+            console.error('Error al preparar el directorio base:', error);
+            throw error;
+        }
+    };
 
     createProduct = async (body) => {
+        let newProduct = new Product(body.title, body.description, body.price, body.status, body.thumbnail, body.code, body.stock, body.available);
 
-        let newProduct = new Product(body.title, body.description, body.price, body.status, body.thumbnail,  body.code, body.stock, body.available );
-        console.log(newProduct);
-
-        
         try {
-            await this.#preparararDirectorioBase()
-            let productsFile = await this.#fileSystem.promises.readFile(this.#productFilePath, 'utf-8');
+            await this.#prepareBaseDirectory();
+            let productsFile = await this.#fileSystem.readFile(this.#productFilePath, 'utf-8');
             this.#products = JSON.parse(productsFile);
+
             if (this.isCodeDuplicated(newProduct.code)) {
-                return { error: 'El codigo del producto ya existe' };
+                return { error: 'El código del producto ya existe' };
             }
+
             let response = { ...newProduct, id: this.generateId() };
             this.#products.push(response);
-            await this.#fileSystem.promises.writeFile(this.#productFilePath, JSON.stringify(this.#products, null, 2));
+
+            await this.#fileSystem.writeFile(this.#productFilePath, JSON.stringify(this.#products, null, 2));
             return response;
+        } catch (error) {
+            console.error(`Error al crear el producto nuevo: ${JSON.stringify(newProduct)}, detalle del error: ${error}`);
+            throw Error(`Error al crear el producto nuevo: ${JSON.stringify(newProduct)}, detalle del error: ${error}`);
         }
-        catch (error) {
-            console.error(`Error al crear el producto nuevo: ${JSON.stringify(newProd)}, detalle del error: ${error}`);
-            throw Error(`Error al crear el producto nuevo: ${JSON.stringify(newProd)}, detalle del error: ${error}`);
-        }
-    }
+    };
 
     getAllProducts = async () => {
         try {
-            await this.#preparararDirectorioBase()
-            let productsFile = await this.#fileSystem.promises.readFile(this.#productFilePath, 'utf-8');
-            this.#products = JSON.parse(productsFile, null, 2);
-            return  this.#products;
-        }
-        catch (error) {
+            await this.#prepareBaseDirectory();
+            let productsFile = await this.#fileSystem.readFile(this.#productFilePath, 'utf-8');
+            this.#products = JSON.parse(productsFile);
+            return this.#products;
+        } catch (error) {
             console.error(`Error al obtener los productos: ${error}`);
             throw Error(`Error al obtener los productos: ${error}`);
         }
-    }
+    };
 
     getById = async (data) => {
-        let pid = parseInt(data._id)
-        console.log(pid);
+        let pid = parseInt(data._id);
+
         try {
-            await this.#preparararDirectorioBase()
-            let productsFile = await this.#fileSystem.promises.readFile(this.#productFilePath, 'utf-8');
+            await this.#prepareBaseDirectory();
+            let productsFile = await this.#fileSystem.readFile(this.#productFilePath, 'utf-8');
             this.#products = JSON.parse(productsFile);
             let response = this.#products.find(product => product.id === pid);
+
             if (response) {
                 console.log(response);
                 return response;
             }
-
+        } catch (error) {
+            console.error(`Error al obtener el producto con id: ${pid}, detalle del error: ${error}`);
+            throw error;
         }
-        catch (error) {
-            console.error(`Error al obtener el producto con id: ${id}, detalle del error: ${error}`);
-        }
-    }
+    };
 
-    update = async (data, producto /* clave, valor */) => {
+    update = async (data, product /* clave, valor */) => {
         let id = parseInt(data._id);
-        console.log(producto);
+        console.log(product);
+
         try {
-            await this.#preparararDirectorioBase()
-            let productsFile = await this.#fileSystem.promises.readFile(this.#productFilePath, 'utf-8');
+            await this.#prepareBaseDirectory();
+            let productsFile = await this.#fileSystem.readFile(this.#productFilePath, 'utf-8');
             this.#products = JSON.parse(productsFile);
-            let product = this.#products.find(product => product.id === id);
+            let productToUpdate = this.#products.find(product => product.id === id);
 
-            Object.assign(product, producto);
-            await this.#fileSystem.promises.writeFile(this.#productFilePath, JSON.stringify(this.#products, null, 2));
-            return product;
-
+            Object.assign(productToUpdate, product);
+            await this.#fileSystem.writeFile(this.#productFilePath, JSON.stringify(this.#products, null, 2));
+            return productToUpdate;
         } catch (error) {
             console.error(`Error al actualizar el producto con id: ${id}, detalle del error: ${error}`);
+            throw error;
         }
-    }
+    };
 
     delete = async (data) => {
         let id = parseInt(data._id);
+
         try {
-            await this.#preparararDirectorioBase()
-            let productsFile = await this.#fileSystem.promises.readFile(this.#productFilePath, 'utf-8');
+            await this.#prepareBaseDirectory();
+            let productsFile = await this.#fileSystem.readFile(this.#productFilePath, 'utf-8');
             this.#products = JSON.parse(productsFile);
-            let product = this.#products.find(product => product.id === id);
-            if (product) {
+            let productToDelete = this.#products.find(product => product.id === id);
+
+            if (productToDelete) {
                 this.#products = this.#products.filter(product => product.id !== id);
-                await this.#fileSystem.promises.writeFile(this.#productFilePath, JSON.stringify(this.#products, null, 2));
+                await this.#fileSystem.writeFile(this.#productFilePath, JSON.stringify(this.#products, null, 2));
                 console.log(`Producto eliminado:`);
-                console.log(product);
+                console.log(productToDelete);
                 console.log(this.#products);
-
             }
-
         } catch (error) {
             console.error(`Error al eliminar el producto con id: ${id}, detalle del error: ${error}`);
+            throw error;
         }
-
-    }
-
+    };
 }

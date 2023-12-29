@@ -3,13 +3,13 @@ import {ProductModel }from "./models/productModel.js";
 import { createHash } from '../../../utils.js';
 import { isValidPassword } from '../../../utils.js';
 import { generateToken } from '../../../utils.js';
-import envConfig from '../../../config/config.js';
+import config from '../../../config/config.js';
 /* import { CartModel } from "../models/cartModel.js"; */
 import CartServices from "./cart.services.js";
 
 const cartServices = new CartServices();
 
-const PORT = envConfig.port
+const PORT = config.port
 export default class UserService {
 
     getAll = async () => {
@@ -68,7 +68,9 @@ export default class UserService {
             res.cookie('jwtCookieToken', accessToken, {
                 maxAge: 60000,  
                 httpOnly: true, // no expone la cookie cuando esta en true
+               
             })
+            res.status(200).send({ message: 'Login exitoso' });
     };
 
 
@@ -107,5 +109,29 @@ export default class UserService {
         return res.render('profile', {user: req.user, isAdmin})            
     
     }
-
+    deleteInactiveUsers = async (days) => {
+        const twoDaysAgo = new Date();
+        twoDaysAgo.setDate(twoDaysAgo.getDate() - days);
+    
+        try {
+            const inactiveUsers = await userModel.find({
+                last_connection: { $lt: twoDaysAgo },
+            });
+    
+            if (inactiveUsers && inactiveUsers.length > 0) {
+                const deletedUsers = [];
+                for (const user of inactiveUsers) {
+                    await user.remove();
+                    deletedUsers.push(user);
+                }
+    
+                return deletedUsers;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            throw new Error("Error al eliminar usuarios inactivos: " + error.message);
+        }
+    };
+    
 }

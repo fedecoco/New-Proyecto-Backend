@@ -1,7 +1,7 @@
 export default class cart {
-    constructor(id) {
-        this.id = id;
+    constructor(id ) {
         this.products = [];
-
+        this.id = id;
+        
     }
 }

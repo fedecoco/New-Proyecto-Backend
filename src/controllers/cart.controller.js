@@ -1,4 +1,4 @@
-import cart from "../services/dao/dao/filesystem/models/cartModel.js";
+import cart from "../services/dao/filesystem/models/cartModel.js";
 import {cartService} from "../services/factory.js";
 
 
@@ -18,7 +18,7 @@ export const creatNewCart = async (req, res)=>{
     }
     
     }catch (error) {
-        console.error('Error al crear el carrito:', error);
+        req.logger.error('Error al crear el carrito en el usuario: '+ userId);
         res.status(500).json({ error: 'Error interno del servidor', details: error.message }); 
     } 
 };
@@ -35,7 +35,7 @@ export const searchCart = async (req, res)=>{
             res.send({ status: '404', message: 'Carrito no encontrado' }); 
         }
     }catch (error) {
-        console.error('Error al buscar el carrito:', error);
+        req.logger.error('Error al buscar el carrito:' + cid);
         res.status(500).json({ error: 'Error interno del servidor', details: error.message }); 
     } 
 };
@@ -47,12 +47,12 @@ export const putProductToCart = async (req, res) => {
     try {
         const cart = await cartService.prodInCart({_id:cid},{_id:pid})
         if (cart) {
-            res.send({ status: 'Success', payload: cart });
+            res.status(200).send({ status: 'Success', payload: cart });
         } else {
             res.status(404).json({ error: 'Carrito o producto no encontrado' });
         }
     } catch (error) {
-        console.error('Error al buscar el carrito o producto:', error);
+        req.logger.error('Error al buscar el carrito: ' + cid + "o el producto: " + pid);
         res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     } 
 };
@@ -64,12 +64,12 @@ export const deleteProductFromCart = async (req, res) =>{
     try {
         const cart = await cartService.deleteProdInCart({ _id: cid }, { _id: pid });
         if (cart) {
-            res.send({ status: 'Success', payload: cart });
+            res.status(200).send({ status: 'Success', payload: cart });
         } else {
             res.status(404).json({ error: 'Carrito o producto no encontrado' });
         }
     } catch (error) {
-        console.error('Error al buscar el carrito o producto:', error);
+        req.logger.error('Error al buscar el carrito: ' + cid + "o el producto: " + pid);
         res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     }
 };
@@ -86,7 +86,7 @@ export const downQuantity = async (req, res) =>{
             res.status(404).json({ error: 'Carrito o producto no encontrado' });
         }
     } catch (error) {
-        console.error('Error al buscar el carrito o producto:', error);
+        req.logger.error('Error al buscar el carrito: ' + cid + "o el producto: " + pid);
         res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     }
 };
@@ -102,7 +102,7 @@ export const cleanCart = async (req, res) => {
             res.status(404).json({ error: 'Carrito o producto no encontrado' });
         }
     } catch (error) {
-        console.error('Error al buscar el carrito o producto:', error);
+        req.logger.error('Error al buscar el carrito:'+ cid);
         res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     }
 };
@@ -125,11 +125,26 @@ export const renderCart = async (req, res) => {
             res.status(404).json({ error: 'Carrito no encontrado' });
         }
     }catch (error) {
-        console.error('Error al buscar el carrito :', error);
+        req.logger.error('Error al buscar el carrito y renderrizarlo:  ', error);
         res.status(500).json({ error: 'Error interno del servidor', details: error.message });
         
     }
-    
+};
 
+//Eliminar cart
+export const deleteCart = async (req, res) => {
+    let cid = req.params.cid;
+    try {
+        const cart = await cartService.cartDelete({ _id: cid });
+        if (cart) {
+            res.status(200).send({ status: 'Success', payload: cart });
+        } else {
+            res.status(404).json({ error: 'Carrito no encontrado' });
+        }
+    } catch (error) {
+        req.logger.error('Error al buscar el carrito: ' + cid);
+        res.status(500).json({ error: 'Error interno del servidor', details: error.message });
+    }
 
-}
+};
+
